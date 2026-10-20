@@ -5,14 +5,12 @@ const http = require('http');
 const app = express();
 app.use(express.json());
 
-// Tối ưu kết nối TCP Keep-Alive cho Tình huống 3
 const httpAgent = new http.Agent({
     keepAlive: true,
     maxSockets: 50,
     timeout: 5000
 });
 
-// Dữ liệu sinh viên trong bộ nhớ
 let students = {
     1: { id: 1, name: 'Sinh viên 1', debt: 50000000 },
     2: { id: 2, name: 'Sinh viên 2', debt: 0 },
@@ -41,7 +39,6 @@ app.post('/students/:id/payments', async (req, res) => {
     const bankUrl = process.env.BANK_URL || 'http://localhost:4002';
 
     try {
-        // Gọi sang ngân hàng với timeout 4.5 giây
         const response = await axios.post(`${bankUrl}/charges`, {
             reference,
             amount

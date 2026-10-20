@@ -2,7 +2,6 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
-// Đọc biến môi trường mô phỏng lỗi
 const DELAY_MS = parseInt(process.env.DELAY_MS || '0');
 const FAIL_RATE = parseFloat(process.env.FAIL_RATE || '0');
 const DROP_RATE = parseFloat(process.env.DROP_RATE || '0');
@@ -14,10 +13,8 @@ let stats = {
     duplicates: 0
 };
 
-// Lưu trữ các giao dịch đã xử lý để đảm bảo không trừ tiền 2 lần
 const processedCharges = new Map();
 
-// Theo dõi kết nối TCP mới và đặt timeout kết nối nhàn rỗi là 5 giây
 app.use((req, res, next) => {
     stats.connections++;
     console.log(`[BANK] TCP Connection mới #${stats.connections}`);
@@ -54,12 +51,11 @@ app.post('/charges', (req, res) => {
     }
 
     const executeTransaction = () => {
-        // Mô phỏng tỉ lệ lỗi 500 trước khi trừ tiền
+  
         if (Math.random() < FAIL_RATE) {
             return res.status(500).json({ error: 'Lỗi tạm thời từ ngân hàng' });
         }
 
-        // Mô phỏng trừ tiền xong rồi cắt kết nối giữa chừng (DROP_RATE)
         if (Math.random() < DROP_RATE) {
             console.log(`[BANK] Đã trừ tiền nhưng cắt kết nối đột ngột cho reference: ${reference}`);
             processedCharges.set(idempotencyKey, { chargeId: 'ch_' + Date.now(), status: 'PAID', amount });
@@ -67,7 +63,6 @@ app.post('/charges', (req, res) => {
             return req.socket.destroy();
         }
 
-        // Thành công
         const chargeId = 'ch_' + Date.now();
         const result = { chargeId, amount, status: 'PAID' };
         processedCharges.set(idempotencyKey, result);
